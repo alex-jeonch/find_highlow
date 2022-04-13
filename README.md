@@ -1,0 +1,16 @@
+# find_highlow
+
+# requirement pip
+
+python 3.9
+MySql
+pymysql
+pandas
+
+
+# 함수별 기능 설명
+
+upbit.py : 업비트 api 호출 모듈
+db_insert.py : python에 mysql 연동 후 api를 받아 저점 고점 리스트를 만든 후 db에 삽입하는 파일
+highlow_point_find.py : 저점 고점 찾는 모듈
+data_download.py : 업비트 api를 불러와 dataframe으로 전처리하는 함수
