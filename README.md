@@ -9,6 +9,8 @@ MySql
 pymysql
 <br>
 pandas
+<br>
+requests
 
 
 ## 함수별 기능 설명
