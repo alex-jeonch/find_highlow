@@ -29,34 +29,41 @@ def data_download(coin):
     dfs = []
     dfs.append(df)
     a = 1
+    b = 1
 
-    for i in range(1):
-        url_fixed = "https://api.upbit.com/v1/candles/minutes/60?market=KRW-BTC&to=" + df.index[-1] + "&count=200"
+    for i in range(170):
+        url_fixed = "https://api.upbit.com/v1/candles/minutes/60?market=" + coin + "&to=" + df.index[-1] + "&count=200"
 
         headers = {"Accept": "application/json"}
 
         response = requests.request("GET", url_fixed, headers=headers)
 
-        df = pd.read_json(response.text)
+        if response == None:
+            print(f'시간: {response[i]["candle_date_time_kst"]}에서 {coin}값이 없습니다.')
+            break
 
-        df['candle_date_time_kst'] = df.candle_date_time_kst.str.split('T').str[0] + ' ' + df.candle_date_time_kst.str.split('T').str[1]
+        else:
+            df = pd.read_json(response.text)
 
-        df = df[['candle_date_time_kst', 'opening_price', 'high_price', 'low_price', 'trade_price', 'candle_acc_trade_volume']]
-        df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
-        df.set_index('date', inplace=True, drop=True)
+            df['candle_date_time_kst'] = df.candle_date_time_kst.str.split('T').str[0] + ' ' + df.candle_date_time_kst.str.split('T').str[1]
 
-        a += 1
-        dfs.append(df)
-        time.sleep(0.5)
-        print(a)
+            df = df[['candle_date_time_kst', 'opening_price', 'high_price', 'low_price', 'trade_price', 'candle_acc_trade_volume']]
+            df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
+            df.set_index('date', inplace=True, drop=True)
+
+            a += 1
+            dfs.append(df)
+            time.sleep(1.5)
+            print(a)
 
 
     df = pd.concat(dfs)
     df = df.reset_index() # date를 column에 넣기 위해
-
+    print(coin)
+    print(f'{b}입니다.')
+    b += 1
     return df
 
 
-#print(data_download('KRW-ETH'))
 
 
