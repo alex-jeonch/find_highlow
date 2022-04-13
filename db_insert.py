@@ -20,7 +20,7 @@ def create_table():
     cursor = conn.cursor()
 
 
-    query = "CREATE TABLE highlow_point_tb ( idx varchar(30) NOT NULL PRIMARY KEY, date DATETIME NOT NULL, price DECIMAL NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL)"
+    query = "CREATE TABLE highlow_point_tb ( id INT AUTO_INCREMENT PRIMARY KEY, date DATETIME NOT NULL, price DECIMAL NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL, etc VARCHAR(30) UNIQUE NOT NULL)"
     cursor.execute(query)
     conn.commit()
 
@@ -49,10 +49,9 @@ def insert_data_raw(coin):
 def insert_data_api(period):
 
     # dataframe을 db에 연결시켜주는 코드
-    engine = create_engine("mysql://{user}:{pw}@localhost/{db}".format(user='root', pw='0000', db='highlow'))
-    db_connection = engine.connect()
+    # engine = create_engine("mysql://{user}:{pw}@localhost/{db}".format(user='root', pw='0000', db='highlow'))
+    # db_connection = engine.connect()
 
-    conn = pymysql.connect(host='localhost', user='root', passwd='0000', db='highlow', port=3306, charset='utf8')
 
     # 코인리스트 추출하는 모듈 호출
     coin_lst = coinlist()
@@ -90,27 +89,26 @@ def insert_data_api(period):
         # 저점 전처리 코드
         df_low = pd.DataFrame(lst_low, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
         df_low['point_type'] = 'low'
-        df_low['idx'] = df_low['date'] + 'low' + j.split('-')[1]
+        df_low['etc'] = df_low['date'] + 'low' + j.split('-')[1]
         df_low = df_low.rename(columns={'low': 'price'})
-        df_low = df_low[['date', 'price', 'point_type']]
+        df_low = df_low[['date', 'price', 'point_type','etc']]
 
         df_low['coin_type'] = j.split('-')[1]
 
         # 고점 전처리 코드
         df_high = pd.DataFrame(lst_high, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
         df_high['point_type'] = 'high'
-        df_low['idx'] = df_low['date'] + 'high' + j.split('-')[1]
+        df_high['etc'] = df_high['date'] + 'high' + j.split('-')[1]
         df_high = df_high.rename(columns={'high': 'price'})
-        df_high = df_high[['date', 'price', 'point_type']]
+        df_high = df_high[['date', 'price', 'point_type','etc']]
 
         df_high['coin_type'] = j.split('-')[1]
 
-        data_upsert(df_low, conn, "highlow_point_tb")
-        data_upsert(df_high, conn, "highlow_point_tb")
+        data_upsert(df_low, "highlow_point_tb")
+        data_upsert(df_high, "highlow_point_tb")
 
-        conn.commit()
 
-        #conn.close()
+
         # filter_new_df(df_high, 'highlow_point_tb', engine, dup_cols=['date','price','coin_type'])
         # filter_new_df(df_low, 'highlow_point_tb', engine, dup_cols=['date','price','coin_type'])
 
@@ -121,13 +119,15 @@ def insert_data_api(period):
         # db 닫기
         #db_connection.close()
 
-
     return 'success!'
 
 
 
-def data_upsert(df, dbcon, tb_name):
+
+
+def data_upsert(df, tb_name):
     try:
+        conn = pymysql.connect(host='localhost', user='root', passwd='0000', db='highlow', port=3306, charset='utf8')
         cols = [column for column in list(df.columns)]
 
         str_query = ""
@@ -159,10 +159,13 @@ def data_upsert(df, dbcon, tb_name):
             str_query += "),"
         str_query = str_query[:-1]
 
-        cursor = dbcon.cursor()
+        cursor = conn.cursor()
         cnt = cursor.execute(str_query)
+        print(str_query)
+        conn.commit()
+        conn.close()
 
-        cursor.close()
+
 
     except Exception as ex:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -173,3 +176,4 @@ def data_upsert(df, dbcon, tb_name):
 
 #create_table()
 insert_data_api(10)
+
