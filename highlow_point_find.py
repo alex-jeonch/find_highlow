@@ -39,8 +39,8 @@ def high_point(period):
 
     df_high = pd.DataFrame(lst_high, columns=['date','open','high','low','close','volume'])
     df_high['point_type'] = 'high'
-    df_high = df_high.rename(columns={'high' : 'amount'})
-    df_high = df_high[['date','amount','point_type']]
+    df_high = df_high.rename(columns={'high' : 'price'})
+    df_high = df_high[['date','price','point_type']]
 
     return df_high
 
@@ -63,8 +63,8 @@ def low_point(period):
 
     df_low = pd.DataFrame(lst_low, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
     df_low['point_type'] = 'low'
-    df_low = df_low.rename(columns={'low': 'amount'})
-    df_low = df_low[['date', 'amount', 'point_type']]
+    df_low = df_low.rename(columns={'low': 'price'})
+    df_low = df_low[['date', 'price', 'point_type']]
 
     return df_low
 

@@ -20,7 +20,7 @@ def create_table():
     #     logging.error('')
     #     sys.exit(1)
 
-    query = "CREATE TABLE highlow_point_tb ( date DATETIME NOT NULL, amount DECIMAL NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL)"
+    query = "CREATE TABLE highlow_point_tb ( date DATETIME NOT NULL, price DECIMAL NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL)"
     cursor.execute(query)
     conn.commit()
 
@@ -32,15 +32,15 @@ def insert_data(coin):
     df = pd.read_json('업비트btc1시간봉(2018~202204).json')
     df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
 
+    data_high = highlow_point_find.high_point(10)
     data_low = highlow_point_find.low_point(10)
+    data_high['coin_type'] = coin
     data_low['coin_type'] = coin
 
+    data_high.to_sql(name='highlow_point_tb', con=engine, if_exists='append',index=False)
     data_low.to_sql(name='highlow_point_tb', con=engine, if_exists='append',index=False)
 
     db_connection.close()
 
 
 
-
-
-insert_data()
