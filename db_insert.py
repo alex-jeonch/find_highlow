@@ -5,8 +5,8 @@ import sys
 from data_download import data_download
 from coinlist import coinlist
 import pandas as pd
+import numpy as np
 import pymysql
-from highlow_point_find import low_point, high_point
 
 
 def create_table():
@@ -26,16 +26,15 @@ def create_table():
 
 def insert_data_api(period):
 
-    # dataframe을 db에 연결시켜주는 코드
-    # engine = create_engine("mysql://{user}:{pw}@localhost/{db}".format(user='root', pw='0000', db='highlow'))
-    # db_connection = engine.connect()
-
-
     # 코인리스트 추출하는 모듈 호출
     coin_lst = coinlist()
-
+    count = 1
     # 코인리스트에 있는 코인들을 하나씩 불러와서 api로 다운로드
     for j in coin_lst:
+        print(count)
+        print(j)
+        count += 1
+        print('==========================================')
         df = data_download(j)
 
         lst_low = []
@@ -50,7 +49,10 @@ def insert_data_api(period):
                 break
 
             elif df.iloc[i]['low'] == lst['low'].min():
-                lst_low.append(df.iloc[i].values.tolist())
+                if (df.iloc[i-1]['low'] == df.iloc[i]['low']):
+                    pass
+                else:
+                    lst_low.append(df.iloc[i].values.tolist())
 
         # 고점 계산하는 코드
         for k in range(len(df)):
@@ -61,7 +63,11 @@ def insert_data_api(period):
                 break
 
             elif df.iloc[k]['high'] == lst['high'].max():
-                lst_high.append(df.iloc[k].values.tolist())
+                if (df.iloc[k-1]['high'] == df.iloc[k]['high']):
+                    pass
+                else:
+                    lst_high.append(df.iloc[k].values.tolist())
+
 
 
         # 저점 전처리 코드
@@ -84,9 +90,6 @@ def insert_data_api(period):
 
         data_upsert(df_low, "highlow_point_tb")
         data_upsert(df_high, "highlow_point_tb")
-
-
-
 
     return 'success!'
 
@@ -130,7 +133,6 @@ def data_upsert(df, tb_name):
 
         cursor = conn.cursor()
         cnt = cursor.execute(str_query)
-        #print(str_query)
         conn.commit()
         conn.close()
 
