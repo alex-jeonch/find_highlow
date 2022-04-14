@@ -7,12 +7,7 @@ from coinlist import coinlist
 import pandas as pd
 import pymysql
 from highlow_point_find import low_point, high_point
-from sqlalchemy import create_engine
 
-pymysql.install_as_MySQLdb()
-
-engine = create_engine("mysql://{user}:{pw}@localhost/{db}".format(user='root', pw='0000', db='highlow'))
-db_connection = engine.connect()
 
 def create_table():
 
@@ -20,30 +15,13 @@ def create_table():
     cursor = conn.cursor()
 
 
-    query = "CREATE TABLE highlow_point_tb ( id INT AUTO_INCREMENT PRIMARY KEY, date DATETIME NOT NULL, price DECIMAL NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL, etc VARCHAR(30) UNIQUE NOT NULL)"
+    query = "CREATE TABLE highlow_point_tb ( id INT AUTO_INCREMENT PRIMARY KEY, date DATETIME NOT NULL, price float NOT NULL, point_type VARCHAR(4) NOT NULL, coin_type VARCHAR(10) NOT NULL, etc VARCHAR(30) UNIQUE NOT NULL)"
     cursor.execute(query)
     conn.commit()
 
     conn.close()
 
     return 'success!'
-
-
-def insert_data_raw(coin):
-
-    df = pd.read_json('업비트btc1시간봉(2018~202204).json')
-    df.columns = ['date', 'open', 'high', 'low', 'close', 'volume']
-
-
-    data_high = high_point(10)
-    data_low = low_point(10)
-    data_high['coin_type'] = coin
-    data_low['coin_type'] = coin
-
-    data_high.to_sql(name='highlow_point_tb', con=engine, if_exists='append',index=False)
-    data_low.to_sql(name='highlow_point_tb', con=engine, if_exists='append',index=False)
-
-    db_connection.close()
 
 
 def insert_data_api(period):
@@ -93,7 +71,7 @@ def insert_data_api(period):
         df_low = df_low.rename(columns={'low': 'price'})
         df_low = df_low[['date', 'price', 'point_type','etc']]
 
-        df_low['coin_type'] = j.split('-')[1]
+        df_low['coin_type'] = j
 
         # 고점 전처리 코드
         df_high = pd.DataFrame(lst_high, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
@@ -102,22 +80,13 @@ def insert_data_api(period):
         df_high = df_high.rename(columns={'high': 'price'})
         df_high = df_high[['date', 'price', 'point_type','etc']]
 
-        df_high['coin_type'] = j.split('-')[1]
+        df_high['coin_type'] = j
 
         data_upsert(df_low, "highlow_point_tb")
         data_upsert(df_high, "highlow_point_tb")
 
 
 
-        # filter_new_df(df_high, 'highlow_point_tb', engine, dup_cols=['date','price','coin_type'])
-        # filter_new_df(df_low, 'highlow_point_tb', engine, dup_cols=['date','price','coin_type'])
-
-        # 저점 및 고점 db에 삽입
-        # df_low.to_sql(name='highlow_point_tb', con=engine, if_exists='append', index=False)
-        # df_high.to_sql(name='highlow_point_tb', con=engine, if_exists='append', index=False)
-
-        # db 닫기
-        #db_connection.close()
 
     return 'success!'
 
@@ -161,7 +130,7 @@ def data_upsert(df, tb_name):
 
         cursor = conn.cursor()
         cnt = cursor.execute(str_query)
-        print(str_query)
+        #print(str_query)
         conn.commit()
         conn.close()
 
